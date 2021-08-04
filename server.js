@@ -5,30 +5,71 @@ const app = express();
 
 const db = require("./db");
 const syncAndSeed = db.syncAndSeed;
-const User = db.models.User;
+const Bookmark = db.models.Bookmark;
 
-// app.get("/", (req, res, next) => {
-//   res.redirect("/users");
-// });
+app.get("/", (req, res, next) => {
+  //res.send("howdy");
+  res.redirect("/bookmarks");
+});
 
-// app.get("/users", (req, res, next) => {
-//   //res.send('TODO users');
-//   try {
-//     const users = await User.findAll();
-//     res.send(`
-//             <html>
-//                 <head>
-//                 </head>
-//                 <body>
-//                     <h1>Users</h1>
-//                     ToDO show sates with user counts
-//                 </body>
-//             </html>
-//         `);
-//   } catch (ex) {
-//     next(ex);
-//   }
-// });
+app.get("/bookmarks", async (req, res, next) => {
+  try {
+    const bookmarks = await Bookmark.findAll();
+
+    const group = (arr) => {
+      return arr.reduce((acc, link) => {
+        acc[link.category] = acc[link.category] || 0;
+        acc[link.category]++;
+        return acc;
+      }, {});
+    };
+
+    const grouped = group(bookmarks);
+
+    res.send(`
+            <html>
+                <head>
+                </head>
+                <body>
+                    <h1>Bookmarks!!!!!!</h1>
+                    <ul>
+                    	${Object.entries(grouped)
+                        .map((entry) => {
+                          return `
+			                    <li><a href="/bookmarks/${entry[0]}">${entry[0]} (${entry[1]})</a></li>
+		                       `;
+                        })
+                        .join("")}
+                    </ul>
+                </body>
+            </html>
+            `);
+  } catch (ex) {
+    next(ex);
+  }
+});
+
+app.get("/bookmarks/:category", async (req, res, next) => {
+  try {
+    const bookmarks = await Bookmark.findAll({
+      where: {
+        category: req.params.category,
+      },
+    });
+    res.send(`
+                <html>
+                    <head>
+                    </head>
+                    <body>
+                        <a href='/bookmarks'>Back</a>
+                        <h1>${req.params.category} (${bookmarks.length})</h1>
+                    </body>
+                </html>
+            `);
+  } catch (ex) {
+    next(ex);
+  }
+});
 
 const init = async () => {
   try {
